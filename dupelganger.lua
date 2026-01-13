@@ -2,61 +2,71 @@
 local player = game.Players.LocalPlayer
 local rs = game:GetService("ReplicatedStorage")
 local uis = game:GetService("UserInputService")
-local net = rs:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE")
 
--- Chemins détectés via tes logs Discord
-local placeRemote = net:WaitForChild("fce51e06-a587-4ff0-9e19-869eb1859a01")
-local pingRemote = net:WaitForChild("eb9dee81-7718-4020-b6b2-219888488d13")
+-- Dossier des Remotes détectés
+local netFolder = rs:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE")
+local placeRemote = netFolder:WaitForChild("fce51e06-a587-4ff0-9e19-869eb1859a01")
+local pingRemote = netFolder:WaitForChild("eb9dee81-7718-4020-b6b2-219888488d13")
 
--- Variables de stockage
-local lastArg2 = "70646659-e472-4788-a9d8-cfa70e3d378c" -- Ton ID de session/base
-local lastArg3 = "" -- Sera capturé dynamiquement
+-- Variables de capture
+local lastArg2 = "70646659-e472-4788-a9d8-cfa70e3d378c" 
+local capturedID = "" 
+local isSpamming = false
 
+-- 1. Notification de démarrage
 game.StarterGui:SetCore("SendNotification", {
-    Title = "🔥 SWAPPER PRÊT";
-    Text = "Pose un objet CHER une fois pour capturer l'ID !";
-    Duration = 10;
+    Title = "🔥 SWAPPER PRÊT",
+    Text = "Pose ton objet CHER une fois pour capturer son ID !",
+    Duration = 8
 })
 
--- 1. On "écoute" pour capturer l'ID de ton objet cher quand tu le poses la première fois
+-- 2. Hook pour capturer l'ID quand tu poses l'objet à la main
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
 
 mt.__namecall = newcclosure(function(self, ...)
     local args = {...}
-    if self == placeRemote then
-        lastArg3 = args[3] -- On capture l'ID de l'objet (Arg 3)
-        print("🎯 ID Objet capturé : " .. tostring(lastArg3))
+    if self == placeRemote and not isSpamming then
+        capturedID = args[3] -- On capture l'ID unique (GUID)
+        lastArg2 = args[2]   -- On capture aussi l'ID de ta session au cas où
+        
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "🎯 ID CAPTURÉ",
+            Text = "Prêt pour le swap ! Reprends l'objet.",
+            Duration = 5
+        })
     end
     return oldNamecall(self, ...)
 end)
 setreadonly(mt, true)
 
--- 2. Fonction de SPAM pour le SWAP
-local function startDupeSwap()
-    if lastArg3 == "" then
-        warn("⚠️ Tu dois poser ton objet cher au moins une fois avant !")
+-- 3. Fonction de Spam pour forcer la pose (Le Dupe)
+local function startSwap()
+    if capturedID == "" then
+        print("⚠️ Erreur : Capture l'ID d'abord !")
         return
     end
 
-    print("🚀 LANCEMENT DU SWAP FORCÉ...")
-    
-    -- On envoie 20 requêtes ultra-rapides pour écraser la place vide
-    for i = 1, 20 do
+    isSpamming = true
+    local mouse = player:GetMouse()
+    print("🚀 TENTATIVE DE SWAP...")
+
+    -- On bombarde le serveur pour prendre la place vide
+    for i = 1, 15 do
         local timestamp = tick()
-        -- On envoie le Ping et la Pose en même temps pour simuler un vrai joueur
+        -- On envoie le ping de synchro et la pose
         pingRemote:FireServer(timestamp, "9aba28d9-6365-4f5b-843c-f4830e87c058")
-        placeRemote:FireServer(timestamp, lastArg2, lastArg3, 3) 
-        task.wait(0.005)
+        placeRemote:FireServer(timestamp, lastArg2, capturedID, 3)
+        task.wait(0.01)
     end
-    print("✅ Tentative terminée.")
+
+    isSpamming = false
 end
 
--- 3. Déclencheur (Appuie sur l'écran au moment où l'ami vole l'objet nul)
+-- 4. Déclencheur : Clique n'importe où pour poser l'objet capturé
 uis.InputBegan:Connect(function(input, processed)
     if not processed and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
-        -- On vérifie si on est en train de "cliquer" pour swapper
-        startDupeSwap()
+        startSwap()
     end
 end)
