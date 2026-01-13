@@ -1,61 +1,40 @@
--- VERSION FINALE CORRIGÉE : BRAINROT DUPER
-local player = game.Players.LocalPlayer
+-- TEST SIMPLIFIÉ
 local rs = game:GetService("ReplicatedStorage")
 local uis = game:GetService("UserInputService")
+local net = rs:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE")
 
--- Dossier des Remotes détectés
-local netFolder = rs:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE")
-local placeRemote = netFolder:WaitForChild("fce51e06-a587-4ff0-9e19-869eb1859a01")
-local pingRemote = netFolder:WaitForChild("eb9dee81-7718-4020-b6b2-219888488d13")
+local placeRemote = net:WaitForChild("fce51e06-a587-4ff0-9e19-869eb1859a01")
+local pingRemote = net:WaitForChild("eb9dee81-7718-4020-b6b2-219888488d13")
 
--- Variables de capture
-local lastArg2 = "70646659-e472-4788-a9d8-cfa70e3d378c" 
-local capturedID = "" 
-local isSpamming = false
+local capID = ""
+local sess = "70646659-e472-4788-a9d8-cfa70e3d378c"
 
--- 1. Notification de démarrage
-game.StarterGui:SetCore("SendNotification", {
-    Title = "🔥 SWAPPER PRÊT",
-    Text = "Pose ton objet CHER une fois !",
-    Duration = 8
-})
+game.StarterGui:SetCore("SendNotification", {Title = "PRET", Text = "Pose l'objet cher !"})
 
--- 2. Hook pour capturer l'ID
+-- Capture simple
 local mt = getrawmetatable(game)
-local oldNamecall = mt.__namecall
+local old = mt.__namecall
 setreadonly(mt, false)
-
 mt.__namecall = newcclosure(function(self, ...)
     local args = {...}
-    if self == placeRemote and not isSpamming then
-        capturedID = args[3]
-        lastArg2 = args[2]
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "🎯 ID CAPTURÉ",
-            Text = "Prêt pour le swap !",
-            Duration = 5
-        })
+    if self == placeRemote and capID == "" then
+        capID = args[3]
+        sess = args[2]
+        print("ID CAPTURE : "..tostring(capID))
     end
-    return oldNamecall(self, ...)
+    return old(self, ...)
 end)
 setreadonly(mt, true)
 
--- 3. Fonction de Spam
-local function startSwap()
-    if capturedID == "" then return end
-    isSpamming = true
-    for i = 1, 15 do
-        local timestamp = tick()
-        pingRemote:FireServer(timestamp, "9aba28d9-6365-4f5b-843c-f4830e87c058")
-        placeRemote:FireServer(timestamp, lastArg2, capturedID, 3)
-        task.wait(0.01)
-    end
-    isSpamming = false
-end
-
--- 4. Déclencheur
-uis.InputBegan:Connect(function(input, processed)
-    if not processed and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
-        startSwap()
+-- Spam simple
+uis.InputBegan:Connect(function(i, p)
+    if not p and (i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1) then
+        if capID ~= "" then
+            for count = 1, 10 do
+                pingRemote:FireServer(tick(), "9aba28d9-6365-4f5b-843c-f4830e87c058")
+                placeRemote:FireServer(tick(), sess, capID, 3)
+                task.wait()
+            end
+        end
     end
 end)
