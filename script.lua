@@ -1,22 +1,23 @@
--- VERSION ROBUSTE : BRAINROT DUPER V2
+-- VERSION ROBUSTE MOBILE : BRAINROT DUPER V2 (DELTA)
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 local rs = game:GetService("ReplicatedStorage")
+local uis = game:GetService("UserInputService")
 
--- 1. Notification de démarrage
+-- 1. Notification de démarrage (Adaptée mobile)
 game.StarterGui:SetCore("SendNotification", {
     Title = "🔥 BRAINROT DUPER V2";
-    Text = "Mode Swapper Activé - Prêt pour la Dupe";
+    Text = "Mode Mobile Activé - Touchez pour Swapper";
     Duration = 5;
 })
 
 -- 2. Fonction de détection automatique (Recherche tous les Remotes de pose)
 local function findPlacementRemote()
-    local names = {"Place", "Deposit", "Claim", "Drop", "Build", "Set"}
+    local names = {"Place", "Deposit", "Claim", "Drop", "Build", "Set", "Put"}
     for _, obj in pairs(rs:GetDescendants()) do
         if obj:IsA("RemoteEvent") then
             for _, keyword in pairs(names) do
-                if obj.Name:find(keyword) then
+                if string.find(obj.Name:lower(), keyword:lower()) then
                     return obj
                 end
             end
@@ -27,36 +28,42 @@ end
 
 local remote = findPlacementRemote()
 
--- 3. Le système de Force-Swap
-local swapping = false
-
--- On utilise la touche "E" ou le clic pour lancer le swap rapide
-mouse.Button1Down:Connect(function()
+-- 3. Le système de Force-Swap optimisé pour le Toucher
+local function executeSwap()
     if not remote then 
-        remote = findPlacementRemote() -- Nouvelle tentative si pas trouvé
+        remote = findPlacementRemote() 
     end
 
     if remote then
-        swapping = true
-        print("🚀 Lancement du Rapid-Swap sur : " .. remote.Name)
+        print("🚀 Rapid-Swap lancé sur : " .. remote.Name)
         
-        -- On envoie 10 requêtes très vite pour "forcer" le passage
-        for i = 1, 10 do
-            if not swapping then break end
-            remote:FireServer(mouse.Hit.p) 
-            task.wait(0.01) -- Délai ultra court
+        -- On envoie 15 requêtes (mieux pour la latence mobile)
+        for i = 1, 15 do
+            -- On utilise le CFrame de la souris ou la position devant le perso
+            local targetPos = mouse.Hit.p
+            remote:FireServer(targetPos) 
+            task.wait(0.01) -- Délai pour ne pas faire crash Delta
         end
-        
-        swapping = false
-        print("✅ Cycle de swap terminé.")
+        print("✅ Cycle terminé.")
     else
-        warn("❌ Impossible de trouver le système de pose du jeu.")
+        warn("❌ Remote non trouvé ! Essayez de poser un objet manuellement une fois.")
+    end
+end
+
+-- Détection universelle : Clic souris ET Toucher mobile
+uis.InputBegan:Connect(function(input, processed)
+    if processed then return end -- Évite de s'activer si on touche un bouton du menu
+    
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        executeSwap()
     end
 end)
 
--- 4. Petit bonus : Anti-AFK (pour ne pas être déconnecté pendant la dupe)
-local virtualUser = game:GetService("VirtualUser")
+-- 4. Anti-AFK Mobile
 player.Idled:Connect(function()
-    virtualUser:CaptureController()
-    virtualUser:ClickButton2(Vector2.new())
+    game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
 end)
+
+print("Script prêt pour Delta Mobile !")
