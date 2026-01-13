@@ -1,69 +1,34 @@
--- VERSION ROBUSTE MOBILE : BRAINROT DUPER V2 (DELTA)
+-- SCRIPT FINAL (DANS DUPER.LUA)
 local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
 local rs = game:GetService("ReplicatedStorage")
 local uis = game:GetService("UserInputService")
 
--- 1. Notification de démarrage (Adaptée mobile)
+-- Chemins vers les Remotes que TU as trouvé
+local net = rs:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE")
+local placeRemote = net:WaitForChild("fce51e06-a587-4ff0-9e19-869eb1859a01")
+local pingRemote = net:WaitForChild("eb9dee81-7718-4020-b6b2-219888488d13")
+
+-- IDs de tes logs Discord
+local sessID = "70646659-e472-4788-a9d8-cfa70e3d378c"
+local itemID = "fae15e5e-0f38-4865-9046-8595414772fb" -- Ton objet cher
+
 game.StarterGui:SetCore("SendNotification", {
-    Title = "🔥 BRAINROT DUPER V2";
-    Text = "Mode Mobile Activé - Touchez pour Swapper";
-    Duration = 5;
+    Title = "🔥 DUPER PRÊT",
+    Text = "Le script est chargé dans duper.lua !",
+    Duration = 5
 })
 
--- 2. Fonction de détection automatique (Recherche tous les Remotes de pose)
-local function findPlacementRemote()
-    local names = {"Place", "Deposit", "Claim", "Drop", "Build", "Set", "Put"}
-    for _, obj in pairs(rs:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            for _, keyword in pairs(names) do
-                if string.find(obj.Name:lower(), keyword:lower()) then
-                    return obj
-                end
-            end
-        end
-    end
-    return nil
-end
-
-local remote = findPlacementRemote()
-
--- 3. Le système de Force-Swap optimisé pour le Toucher
-local function executeSwap()
-    if not remote then 
-        remote = findPlacementRemote() 
-    end
-
-    if remote then
-        print("🚀 Rapid-Swap lancé sur : " .. remote.Name)
-        
-        -- On envoie 15 requêtes (mieux pour la latence mobile)
-        for i = 1, 15 do
-            -- On utilise le CFrame de la souris ou la position devant le perso
-            local targetPos = mouse.Hit.p
-            remote:FireServer(targetPos) 
-            task.wait(0.01) -- Délai pour ne pas faire crash Delta
-        end
-        print("✅ Cycle terminé.")
-    else
-        warn("❌ Remote non trouvé ! Essayez de poser un objet manuellement une fois.")
+local function startDupe()
+    for i = 1, 15 do
+        local t = tick()
+        pingRemote:FireServer(t, "9aba28d9-6365-4f5b-843c-f4830e87c058")
+        placeRemote:FireServer(t, sessID, itemID, 3)
+        task.wait(0.01)
     end
 end
 
--- Détection universelle : Clic souris ET Toucher mobile
 uis.InputBegan:Connect(function(input, processed)
-    if processed then return end -- Évite de s'activer si on touche un bouton du menu
-    
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        executeSwap()
+    if not processed and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+        startDupe()
     end
 end)
-
--- 4. Anti-AFK Mobile
-player.Idled:Connect(function()
-    game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-end)
-
-print("Script prêt pour Delta Mobile !")
