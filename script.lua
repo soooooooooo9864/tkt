@@ -1,27 +1,25 @@
---[[ 
-  SCRIPT DE PLACEMENT FORCÉ (SWAP)
-  Ce code s'exécutera quand tu feras ton loadstring dans Delta
---]]
+-- Notification pour savoir que ça a marché
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Brainrot Dupe";
+    Text = "Script de placement activé !";
+    Duration = 5;
+})
 
-print("Script de Dupe Chargé !")
+print("Le script est prêt !")
 
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
-local rs = game:GetService("ReplicatedStorage")
 
--- On cherche le Remote du jeu (on teste les noms les plus courants)
-local placeRemote = rs:FindFirstChild("PlaceItem", true) or rs:FindFirstChild("DropBrainrot", true) or rs:FindFirstChild("PlaceObject", true)
-
-if not placeRemote then
-    warn("ERREUR : Le Remote de pose n'a pas été trouvé. Le jeu est peut-être protégé.")
-end
-
--- Fonction pour forcer le placement quand tu cliques
+-- On force le placement quand tu cliques
 mouse.Button1Down:Connect(function()
-    if placeRemote then
-        -- On envoie la position de ta souris au serveur
-        -- Même si l'emplacement est "volé", le script force l'envoi du message
-        placeRemote:FireServer(mouse.Hit.p)
-        print("Placement forcé envoyé à : " .. tostring(mouse.Hit.p))
+    -- On cherche le système de pose du jeu
+    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("PlaceObject", true) 
+                or game:GetService("ReplicatedStorage"):FindFirstChild("PlaceItem", true)
+    
+    if remote then
+        remote:FireServer(mouse.Hit.p)
+        print("Placement forcé envoyé !")
+    else
+        print("Remote non trouvé, essaye de poser un objet pour le détecter")
     end
 end)
